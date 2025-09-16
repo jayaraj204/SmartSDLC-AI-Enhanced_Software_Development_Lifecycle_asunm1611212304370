@@ -1,0 +1,82 @@
+# Copyright 2024 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+steps:
+  - name: 'gcr.io/cloud-builders/docker'
+    id: 'Build'
+    args: [
+        'build',
+        '-t', '$_REPO_LOCATION-docker.pkg.dev/$_PROJECT_ID/$_REPO_ID/$_SERVICE_NAME',
+        '.' 
+    ]
+
+  - name: 'gcr.io/cloud-builders/docker'
+    id: 'Tag: LATEST'
+    args: [
+        'tag',
+        '$_REPO_LOCATION-docker.pkg.dev/$_PROJECT_ID/$_REPO_ID/$_SERVICE_NAME',
+        '$_REPO_LOCATION-docker.pkg.dev/$_PROJECT_ID/$_REPO_ID/$_SERVICE_NAME:$_TAG'
+    ]
+  - name: 'gcr.io/cloud-builders/docker'
+    id: 'Push: LATEST'
+    args: [
+        'push',
+        '$_REPO_LOCATION-docker.pkg.dev/$_PROJECT_ID/$_REPO_ID/$_SERVICE_NAME:$_TAG'
+    ]
+
+  - name: 'gcr.io/cloud-builders/gcloud'
+    id: 'Deploy'
+    args: [
+        'run',
+        'deploy', '$_SERVICE_NAME',
+        '--image', '$_REPO_LOCATION-docker.pkg.dev/$_PROJECT_ID/$_REPO_ID/$_SERVICE_NAME:$_TAG',
+        '--platform', 'managed',
+        '--region', '$_SERVICE_REGION',
+        '--set-env-vars=PROJECT_ID=$_PROJECT_ID',
+        '--set-env-vars=USER_AGENT=$_USER_AGENT', 
+        '--set-secrets=APIKEY=apikey:latest',
+        '--set-secrets=GIT_TOKEN=gittoken:latest',
+        '--set-secrets=GITLAB_APP_ID=gitlab-app-id:latest',
+        '--set-secrets=GITLAB_APP_SECRET=gitlab-app-secret:latest',
+        '--set-secrets=SESSION_SECRET=session-secret:latest',
+        '--min-instances=1', '--max-instances=10',
+        '--network=$_VPC_NETWORK', '--subnet=$_VPC_SUBNET',
+        '--memory=8Gi','--cpu=4',
+        '--no-cpu-throttling', '--cpu-boost',
+        '--timeout=900',
+        '--allow-unauthenticated'
+    ]
+
+  - name: 'gcr.io/cloud-builders/gcloud'
+    id: 'Map Volume'
+    args: [
+        'beta', 'run',
+        'services', 'update', '$_SERVICE_NAME',
+        '--region', '$_SERVICE_REGION',
+        '--add-volume=name=workvolume,type=in-memory,size-limit=10G',
+        '--add-volume-mount=volume=workvolume,mount-path=/work'
+    ]
+
+substitutions:
+  _SERVICE_NAME: wiki-interface
+  _SERVICE_REGION: us-east1
+  _TAG: 1.0.0
+  _REPO_LOCATION: southamerica-east1
+  _PROJECT_ID: gcp-project-id
+  _REPO_ID: docker-repo
+  _USER_AGENT: wiki-interface
+  _VPC_NETWORK: vpc-name
+  _VPC_SUBNET: subnet-name
+
+tags: ['wiki-interface','docker','nodejs', 'vertex']

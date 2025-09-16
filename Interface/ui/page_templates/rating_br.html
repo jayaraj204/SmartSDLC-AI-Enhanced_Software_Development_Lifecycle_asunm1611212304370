@@ -1,0 +1,20 @@
+<h3>GenAI Dashboard</h3>
+<br />
+<div id="ratingContent" class="tabcontent active" style="display: block"></div>
+<br />
+<a href="#" onclick="showPopup(); return false;">View Source</a>
+<div>
+    <br />
+    <input type="hidden" name="ratingDocumentId" id="ratingDocumentId" value="" />
+    <input type="hidden" name="ratingTransactionId" id="ratingTransactionId" value="" />
+    <input type="hidden" name="ratingPagePath" id="ratingPagePath" value="" />
+    <input type="hidden" name="ratingPageContent" id="ratingPageContent" value="" />
+    <input type="hidden" name="ratingMimeType" id="ratingMimeType" value="" />
+    <label for="ratevalue">Avalie o documento:</label>&nbsp;<label id="ratevalue" name="ratevalue">3</label><br /><br />
+    <label for="rate">0 &nbsp;</label>
+    <input type="range" id="rating" name="rating" min="0" max="5" onchange="showRating()"><label for="rate">&nbsp;5</label>
+    <br />
+    <br />
+    <button id="processar" onclick="sendRatingData()">Salvar</button>
+</div>
+<br />&nbsp;<br />
